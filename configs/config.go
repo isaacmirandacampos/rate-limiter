@@ -3,7 +3,8 @@ package configs
 import "github.com/spf13/viper"
 
 type conf struct {
-	Timeout string `mapstructure:"TIMEOUT"`
+	Timeout      int32  `mapstructure:"TIMEOUT"`
+	RedisAddress string `mapstructure:"REDIS_ADDRESS"`
 }
 
 func LoadConfig(path string) (*conf, error) {

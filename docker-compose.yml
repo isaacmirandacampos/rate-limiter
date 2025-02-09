@@ -1,5 +1,6 @@
 services:
   rate-limiter-api:
+    container_name: rate-limiter-api
     build:
       context: .
       dockerfile: Dockerfile
@@ -7,8 +8,18 @@ services:
       - '8080:8080'
     depends_on:
       - redis
+    volumes:
+      - .:/app
+    networks:
+      - rate-limiter-network
   redis:
+    container_name: redis
     image: redis:7.4.2-alpine
     ports:
       - '6379:6379'
-    command: redis-server --requirepass redis
+    command: redis-server
+    networks:
+      - rate-limiter-network
+networks:
+  rate-limiter-network:
+    name: rate-limiter-network
