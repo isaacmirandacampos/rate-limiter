@@ -22,7 +22,7 @@ func main() {
 		configs.RedisAddress,
 	)
 	defer redisPool.Close()
-	rateLimiter := middleware.NewRateLimiter(redisPool, timeout)
+	rateLimiter := middleware.NewRateLimiter(redisPool, configs.RequestsPerSecond, timeout)
 	http.HandleFunc("/", rateLimiter.RateLimiterMiddleware(controller.HelloWorld))
 	fmt.Println("Server is running on port 8080")
 	http.ListenAndServe(":8080", nil)
