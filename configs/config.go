@@ -3,10 +3,10 @@ package configs
 import "github.com/spf13/viper"
 
 type conf struct {
-	Timeout                     int64  `mapstructure:"TIMEOUT"`
-	RedisAddress                string `mapstructure:"REDIS_ADDRESS"`
-	RequestsPerSecondByIp       int32  `mapstructure:"REQUESTS_PER_SECOND_BY_IP"`
-	RequestsPerSecondByApiToken int32  `mapstructure:"REQUESTS_PER_SECOND_BY_API_TOKEN"`
+	Timeout                   int64  `mapstructure:"TIMEOUT"`
+	RedisAddress              string `mapstructure:"REDIS_ADDRESS"`
+	RequestsPerSecondByIp     int32  `mapstructure:"REQUESTS_PER_SECOND_BY_IP"`
+	RequestsPerSecondByApiKey int32  `mapstructure:"REQUESTS_PER_SECOND_BY_API_KEY"`
 }
 
 func LoadConfig(path string) (*conf, error) {
