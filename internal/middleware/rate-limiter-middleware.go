@@ -6,30 +6,30 @@ import (
 	"github.com/isaacmirandacampos/rate-limiter/internal/core"
 )
 
-type RateLimiter struct {
-	core.RateLimiterHandler
+type RateLimiterMiddleware struct {
+	rateLimiterCore           core.RateLimiterHandler
 	requestsPerSecondByIp     int32
 	requestsPerSecondByApiKey int32
 }
 
-func NewRateLimiter(rateLimiterHandler *core.RateLimiterHandler, requestsPerSecondByIp int32, requestsPerSecondByApiKey int32) *RateLimiter {
-	return &RateLimiter{
-		RateLimiterHandler:        *rateLimiterHandler,
+func NewRateLimiterMiddleware(rateLimiterHandler *core.RateLimiterHandler, requestsPerSecondByIp int32, requestsPerSecondByApiKey int32) *RateLimiterMiddleware {
+	return &RateLimiterMiddleware{
+		rateLimiterCore:           *rateLimiterHandler,
 		requestsPerSecondByIp:     requestsPerSecondByIp,
 		requestsPerSecondByApiKey: requestsPerSecondByApiKey,
 	}
 }
 
-func (rate *RateLimiter) RateLimiterMiddleware(next http.HandlerFunc) http.HandlerFunc {
+func (rt *RateLimiterMiddleware) Execute(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ip := r.RemoteAddr[:len(r.RemoteAddr)-6]
 		apiKey := r.Header.Get("API_KEY")
 		var allow bool
 		var err error
 		if apiKey != "" {
-			allow, err = rate.Execute(apiKey, rate.requestsPerSecondByApiKey)
+			allow, err = rt.rateLimiterCore.Execute(apiKey, rt.requestsPerSecondByApiKey)
 		} else {
-			allow, err = rate.Execute(ip, rate.requestsPerSecondByIp)
+			allow, err = rt.rateLimiterCore.Execute(ip, rt.requestsPerSecondByIp)
 		}
 		if err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)

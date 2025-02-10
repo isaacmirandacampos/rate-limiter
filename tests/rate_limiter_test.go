@@ -15,16 +15,13 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/redis"
 )
 
-// Helper function to start a Redis container and return a connection pool
 func setupRedisTestContainer(t *testing.T) (*redigo.Pool, func()) {
-	// Start a Redis test container
 	ctx := context.Background()
 	redisContainer, err := redis.Run(ctx,
 		"redis:7.4.2-alpine",
 	)
 	assert.NoError(t, err)
 
-	// Get Redis connection info
 	redisHost, err := redisContainer.Host(ctx)
 	assert.NoError(t, err)
 	redisPort, err := redisContainer.MappedPort(ctx, "6379")
@@ -40,7 +37,6 @@ func setupRedisTestContainer(t *testing.T) (*redigo.Pool, func()) {
 		},
 	}
 
-	// Cleanup function to terminate Redis container after tests
 	cleanup := func() {
 		redisContainer.Terminate(ctx)
 	}
@@ -48,14 +44,12 @@ func setupRedisTestContainer(t *testing.T) (*redigo.Pool, func()) {
 	return redisPool, cleanup
 }
 
-// Helper function to test rate limiting
-func testRateLimiter(t *testing.T, rateLimiter *middleware.RateLimiter, headers map[string]string, expectedPasses int) {
-	// Mock handler function
+func testRateLimiter(t *testing.T, rateLimiterMiddleware *middleware.RateLimiterMiddleware, headers map[string]string, expectedPasses int) {
 	mockHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	handler := rateLimiter.RateLimiterMiddleware(mockHandler)
+	handler := rateLimiterMiddleware.Execute(mockHandler)
 
 	req := httptest.NewRequest("GET", "/", nil)
 	req.RemoteAddr = "192.168.1.1:1234"
@@ -75,28 +69,22 @@ func testRateLimiter(t *testing.T, rateLimiter *middleware.RateLimiter, headers 
 	assert.Equal(t, http.StatusTooManyRequests, w.Code, "Request %d should be rate limited", expectedPasses+1)
 }
 
-// Test rate limiter based on IP
 func TestRateLimiterMiddlewareByIp(t *testing.T) {
 	redisPool, cleanup := setupRedisTestContainer(t)
 	defer cleanup()
 
-	// Initialize rate limiter
 	repo := core.NewRedisRateLimiterRepository(redisPool)
-	rateLimiter := middleware.NewRateLimiter(core.NewRateLimiterByIp(repo, 3), 2, 1)
+	rateLimiter := middleware.NewRateLimiterMiddleware(core.NewRateLimiterHandler(repo, 3), 2, 1)
 
-	// Run test with IP-based rate limiting
 	testRateLimiter(t, rateLimiter, nil, 2)
 }
 
-// Test rate limiter based on API Key
 func TestRateLimiterMiddlewareByApiKey(t *testing.T) {
 	redisPool, cleanup := setupRedisTestContainer(t)
 	defer cleanup()
 
-	// Initialize rate limiter
 	repo := core.NewRedisRateLimiterRepository(redisPool)
-	rateLimiter := middleware.NewRateLimiter(core.NewRateLimiterByIp(repo, 3), 1, 2)
+	rateLimiter := middleware.NewRateLimiterMiddleware(core.NewRateLimiterHandler(repo, 3), 1, 2)
 
-	// Run test with API key-based rate limiting
 	testRateLimiter(t, rateLimiter, map[string]string{"API_KEY": "1234"}, 2)
 }

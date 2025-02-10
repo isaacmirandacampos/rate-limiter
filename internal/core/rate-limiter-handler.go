@@ -9,7 +9,7 @@ type RateLimiterHandler struct {
 	timeout               int64
 }
 
-func NewRateLimiterByIp(rateLimiterRepository RateLimiterRepository, timeout int64) *RateLimiterHandler {
+func NewRateLimiterHandler(rateLimiterRepository RateLimiterRepository, timeout int64) *RateLimiterHandler {
 	return &RateLimiterHandler{
 		rateLimiterRepository: rateLimiterRepository,
 		timeout:               timeout,

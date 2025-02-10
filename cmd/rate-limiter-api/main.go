@@ -24,9 +24,9 @@ func main() {
 	)
 	defer redisPool.Close()
 	redisRateLimiterRepository := core.NewRedisRateLimiterRepository(redisPool)
-	rateLimiterByIp := core.NewRateLimiterByIp(redisRateLimiterRepository, int64(timeout.Seconds()))
-	rateLimiter := middleware.NewRateLimiter(rateLimiterByIp, configs.RequestsPerSecondByIp, configs.RequestsPerSecondByApiKey)
-	http.HandleFunc("/", rateLimiter.RateLimiterMiddleware(controller.HelloWorld))
+	rateLimiterHandler := core.NewRateLimiterHandler(redisRateLimiterRepository, int64(timeout.Seconds()))
+	rateLimiterMiddleware := middleware.NewRateLimiterMiddleware(rateLimiterHandler, configs.RequestsPerSecondByIp, configs.RequestsPerSecondByApiKey)
+	http.HandleFunc("/", rateLimiterMiddleware.Execute(controller.HelloWorld))
 	fmt.Println("Server is running on port 8080")
 	http.ListenAndServe(":8080", nil)
 }
