@@ -7,14 +7,14 @@ import (
 )
 
 type RateLimiter struct {
-	core.LimiterByIp
+	core.RateLimiterHandler
 	requestsPerSecondByIp     int32
 	requestsPerSecondByApiKey int32
 }
 
-func NewRateLimiter(limiterByIp *core.LimiterByIp, requestsPerSecondByIp int32, requestsPerSecondByApiKey int32) *RateLimiter {
+func NewRateLimiter(rateLimiterHandler *core.RateLimiterHandler, requestsPerSecondByIp int32, requestsPerSecondByApiKey int32) *RateLimiter {
 	return &RateLimiter{
-		LimiterByIp:               *limiterByIp,
+		RateLimiterHandler:        *rateLimiterHandler,
 		requestsPerSecondByIp:     requestsPerSecondByIp,
 		requestsPerSecondByApiKey: requestsPerSecondByApiKey,
 	}
@@ -27,9 +27,9 @@ func (rate *RateLimiter) RateLimiterMiddleware(next http.HandlerFunc) http.Handl
 		var allow bool
 		var err error
 		if apiKey != "" {
-			allow, err = rate.RateLimiterHandler(apiKey, rate.requestsPerSecondByApiKey)
+			allow, err = rate.Execute(apiKey, rate.requestsPerSecondByApiKey)
 		} else {
-			allow, err = rate.RateLimiterHandler(ip, rate.requestsPerSecondByIp)
+			allow, err = rate.Execute(ip, rate.requestsPerSecondByIp)
 		}
 		if err != nil {
 			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
