@@ -10,7 +10,6 @@ COPY . .
 
 # Build
 RUN CGO_ENABLED=0 GOOS=linux go build -o rate-limiter-api cmd/rate-limiter-api/main.go
-COPY /.env.dockerfile .env
 
 FROM alpine:latest
 
